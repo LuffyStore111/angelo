@@ -1,0 +1,27 @@
+name: Publish
+
+permissions:
+  contents: read
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  publish-npm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
+      - uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3.9.1
+        with:
+          node-version: 18
+          registry-url: https://registry.npmjs.org/
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm version ${TAG_NAME} --git-tag-version=false
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+      - run: npm whoami; npm --ignore-scripts publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
